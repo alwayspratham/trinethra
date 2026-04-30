@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trinethra — Fellow Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f0e;
+    --bg2:       #131614;
+    --bg3:       #1a1d1b;
+    --bg4:       #202420;
+    --border:    #2a2f2b;
+    --border2:   #353c36;
+    --text:      #e8ede9;
+    --text2:     #8a9b8c;
+    --text3:     #4a574c;
+    --green:     #3ddc84;
+    --green-dim: #1a4a30;
+    --amber:     #f5a623;
+    --amber-dim: #3d2a0a;
+    --red:       #ff4d4d;
+    --red-dim:   #3d1010;
+    --blue:      #4da6ff;
+    --blue-dim:  #0f2a45;
+    --teal:      #2dd4bf;
+    --teal-dim:  #0a2e2a;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 52px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+  .topbar-logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .topbar-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+  }
+
+  /* ── LAYOUT ── */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* ── INPUT PANEL ── */
+  .input-panel {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg2);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .panel-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  .panel-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    letter-spacing: 0.5px;
+  }
+  .input-body { padding: 1.25rem; }
+
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1rem;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  textarea:focus { border-color: var(--green-dim); }
+  textarea::placeholder { color: var(--text3); }
+
+  .input-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .char-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .btn-analyze {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 22px;
+    background: var(--green);
+    color: #0d0f0e;
+    border: none;
+    border-radius: 3px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-analyze:hover:not(:disabled) { opacity: 0.88; }
+  .btn-analyze:active:not(:disabled) { transform: scale(0.98); }
+  .btn-analyze:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-analyze svg { width: 14px; height: 14px; }
+
+  /* ── LOADING ── */
+  .loading-bar {
+    height: 2px;
+    background: var(--bg3);
+    overflow: hidden;
+    display: none;
+    margin-bottom: 1.5rem;
+  }
+  .loading-bar.active { display: block; }
+  .loading-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--green);
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px var(--green);
+  }
+  .loading-status {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    margin-bottom: 1rem;
+    letter-spacing: 0.5px;
+  }
+  .loading-status.active { display: flex; }
+  .loading-spinner {
+    width: 10px; height: 10px;
+    border: 1.5px solid var(--green-dim);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RESULTS ── */
+  .results { display: none; animation: fadeIn 0.3s ease; }
+  .results.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── TOP METRICS ROW ── */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .score-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .score-number {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+  .score-denom {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+  .score-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-top: 8px;
+  }
+  .score-raw {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+  .score-corrected-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    background: var(--amber-dim);
+    color: var(--amber);
+    border: 1px solid var(--amber);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .layer-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .layer-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .layer-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .layer-desc {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  .reasoning-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+  }
+  .reasoning-text {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.75;
+  }
+  .reasoning-text em {
+    color: var(--text);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  /* ── BOTTOM GRID ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ── SECTION PANELS ── */
+  .section-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .section-panel.full { grid-column: span 2; }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  .section-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+  }
+  .section-body { padding: 1rem 1.1rem; }
+
+  /* ── EVIDENCE ── */
+  .evidence-item {
+    display: flex;
+    gap: 10px;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .evidence-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .evidence-item:first-child { padding-top: 0; }
+
+  .evidence-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .evidence-dot.positive { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .evidence-dot.neutral  { background: var(--text3); }
+  .evidence-dot.negative { background: var(--red); box-shadow: 0 0 5px var(--red); }
+
+  .evidence-quote {
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.6;
+    flex: 1;
+  }
+  .evidence-type {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .evidence-type.positive { background: var(--green-dim); color: var(--green); }
+  .evidence-type.neutral  { background: var(--bg4); color: var(--text3); border: 1px solid var(--border); }
+  .evidence-type.negative { background: var(--red-dim); color: var(--red); }
+
+  /* ── KPI ── */
+  .kpi-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .kpi-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .kpi-item:first-child { padding-top: 0; }
+  .kpi-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 4px;
+  }
+  .kpi-evidence-quote {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 6px;
+    padding-left: 8px;
+    border-left: 2px solid var(--border2);
+    line-height: 1.5;
+  }
+  .kpi-impact {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.55;
+  }
+
+  /* ── GAPS ── */
+  .gap-item {
+    display: flex;
+    gap: 10px;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .gap-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .gap-item:first-child { padding-top: 0; }
+  .gap-icon {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--amber);
+    padding-top: 3px;
+    flex-shrink: 0;
+  }
+  .gap-text { font-size: 12.5px; color: var(--text2); line-height: 1.6; }
+
+  /* ── QUESTIONS ── */
+  .question-item {
+    display: flex;
+    gap: 12px;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .question-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .question-item:first-child { padding-top: 0; }
+  .question-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    padding-top: 3px;
+    flex-shrink: 0;
+    min-width: 20px;
+  }
+  .question-text { font-size: 12.5px; color: var(--text); line-height: 1.6; }
+
+  /* ── EMPTY KPI ── */
+  .empty-state {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    text-align: center;
+    padding: 1.5rem 0;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── ERROR ── */
+  .error-box {
+    display: none;
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--red);
+  }
+  .error-box.active { display: block; }
+
+  /* ── SCORE COLOR THEMING ── */
+  .score-low  { color: var(--red); }
+  .score-mid  { color: var(--amber); }
+  .score-good { color: var(--green); }
+  .score-high { color: var(--teal); }
+
+  .layer-1 { color: var(--amber); }
+  .layer-2 { color: var(--green); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+    .score-card { grid-column: span 2; }
+    .bottom-grid { grid-template-columns: 1fr; }
+    .section-panel.full { grid-column: span 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="topbar-logo-dot"></div>
+    Trinethra
+  </div>
+  <div class="topbar-meta">FELLOW PERFORMANCE ANALYZER v1.0</div>
+</div>
+
+<div class="main">
+
+  <!-- INPUT -->
+  <div class="input-panel">
+    <div class="panel-header">
+      <span class="panel-title">Supervisor Transcript</span>
+      <span class="panel-badge">PASTE RAW TRANSCRIPT</span>
+    </div>
+    <div class="input-body">
+      <textarea id="transcript" placeholder="Paste the supervisor's transcript here. E.g.: 'He comes on time. He updates the sheet daily. He helps me with calls...'"></textarea>
+      <div class="input-actions">
+        <span class="char-count" id="charCount">0 characters</span>
+        <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM7.25 5v3.44L5.03 10.66l1.06 1.06 2.47-2.47V5H7.25z"/></svg>
+          Analyze
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-bar" id="loadingBar"><div class="loading-bar-fill" id="loadingFill"></div></div>
+  <div class="loading-status" id="loadingStatus">
+    <div class="loading-spinner"></div>
+    <span id="loadingText">Extracting evidence...</span>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RESULTS -->
+  <div class="results" id="results">
+
+    <!-- TOP ROW: Score + Layer + Reasoning -->
+    <div class="metrics-row">
+
+      <div class="score-card" id="scoreCard">
+        <div class="score-corrected-badge" id="correctedBadge" style="display:none">CORRECTED</div>
+        <div class="score-number" id="scoreNum">—</div>
+        <div class="score-denom">/ 10</div>
+        <div class="score-label">Performance Score</div>
+        <div class="score-raw" id="scoreRaw"></div>
+      </div>
+
+      <div class="layer-card" id="layerCard">
+        <div>
+          <div class="layer-number" id="layerNum">LAYER —</div>
+          <div class="layer-label" id="layerLabel">—</div>
+        </div>
+        <div class="layer-desc" id="layerDesc">—</div>
+      </div>
+
+      <div class="reasoning-card">
+        <div class="panel-title" style="margin-bottom:0.75rem">Analysis</div>
+        <div class="reasoning-text" id="reasoningText">—</div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM GRID -->
+    <div class="bottom-grid">
+
+      <!-- Evidence -->
+      <div class="section-panel">
+        <div class="section-head">
+          <span class="section-title">Evidence</span>
+          <span class="section-count" id="evidenceCount">—</span>
+        </div>
+        <div class="section-body" id="evidenceList"></div>
+      </div>
+
+      <!-- KPI Mapping -->
+      <div class="section-panel">
+        <div class="section-head">
+          <span class="section-title">KPI Impact</span>
+          <span class="section-count" id="kpiCount">—</span>
+        </div>
+        <div class="section-body" id="kpiList"></div>
+      </div>
+
+      <!-- Gaps -->
+      <div class="section-panel">
+        <div class="section-head">
+          <span class="section-title">Gaps Identified</span>
+          <span class="section-count" id="gapsCount">—</span>
+        </div>
+        <div class="section-body" id="gapsList"></div>
+      </div>
+
+      <!-- Questions -->
+      <div class="section-panel">
+        <div class="section-head">
+          <span class="section-title">Follow-up Questions</span>
+          <span class="section-count" id="questionsCount">—</span>
+        </div>
+        <div class="section-body" id="questionsList"></div>
+      </div>
+
+    </div>
+  </div><!-- /results -->
+
+</div><!-- /main -->
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  // char counter
+  $('transcript').addEventListener('input', function() {
+    $('charCount').textContent = this.value.length + ' characters';
+  });
+
+  // loading steps
+  const STEPS = [
+    'Extracting evidence...',
+    'Classifying behavior signals...',
+    'Scoring against rubric...',
+    'Applying correction logic...',
+    'Mapping KPI impact...',
+    'Generating gap analysis...',
+  ];
+  let stepIdx = 0, stepTimer = null, fillPct = 0;
+
+  function startLoading() {
+    stepIdx = 0; fillPct = 10;
+    $('loadingBar').classList.add('active');
+    $('loadingStatus').classList.add('active');
+    $('loadingFill').style.width = fillPct + '%';
+    $('loadingText').textContent = STEPS[0];
+    stepTimer = setInterval(() => {
+      stepIdx = Math.min(stepIdx + 1, STEPS.length - 1);
+      fillPct  = Math.min(fillPct + 14, 88);
+      $('loadingText').textContent = STEPS[stepIdx];
+      $('loadingFill').style.width = fillPct + '%';
+    }, 900);
+  }
+
+  function stopLoading() {
+    clearInterval(stepTimer);
+    $('loadingFill').style.width = '100%';
+    setTimeout(() => {
+      $('loadingBar').classList.remove('active');
+      $('loadingStatus').classList.remove('active');
+      $('loadingFill').style.width = '0%';
+    }, 400);
+  }
+
+  function scoreColor(s) {
+    if (s <= 4) return 'score-low';
+    if (s <= 6) return 'score-mid';
+    if (s <= 8) return 'score-good';
+    return 'score-high';
+  }
+
+  function renderEvidence(list) {
+    if (!list || !list.length) {
+      $('evidenceList').innerHTML = '<div class="empty-state">NO EVIDENCE EXTRACTED</div>';
+      return;
+    }
+    $('evidenceCount').textContent = list.length + ' items';
+    $('evidenceList').innerHTML = list.map(e => `
+      <div class="evidence-item">
+        <div class="evidence-dot ${e.type}"></div>
+        <div class="evidence-quote">${e.quote}</div>
+        <div class="evidence-type ${e.type}">${e.type}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderKpis(list) {
+    if (!list || !list.length) {
+      $('kpiList').innerHTML = '<div class="empty-state">NO KPI SIGNALS DETECTED</div>';
+      $('kpiCount').textContent = '0 mapped';
+      return;
+    }
+    $('kpiCount').textContent = list.length + ' mapped';
+    $('kpiList').innerHTML = list.map(k => `
+      <div class="kpi-item">
+        <div class="kpi-name">${k.kpi}</div>
+        ${k.evidence.map(q => `<div class="kpi-evidence-quote">${q}</div>`).join('')}
+        <div class="kpi-impact">${k.impact}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderGaps(list) {
+    if (!list || !list.length) {
+      $('gapsList').innerHTML = '<div class="empty-state">NO GAPS FOUND</div>';
+      return;
+    }
+    $('gapsCount').textContent = list.length + ' gaps';
+    $('gapsList').innerHTML = list.map(g => `
+      <div class="gap-item">
+        <div class="gap-icon">△</div>
+        <div class="gap-text">${g}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderQuestions(list) {
+    if (!list || !list.length) {
+      $('questionsList').innerHTML = '<div class="empty-state">NO QUESTIONS GENERATED</div>';
+      return;
+    }
+    $('questionsCount').textContent = list.length + ' questions';
+    $('questionsList').innerHTML = list.map((q, i) => `
+      <div class="question-item">
+        <div class="question-num">Q${i+1}</div>
+        <div class="question-text">${q}</div>
+      </div>
+    `).join('');
+  }
+
+  async function analyze() {
+    const transcript = $('transcript').value.trim();
+    if (!transcript) return;
+
+    $('errorBox').classList.remove('active');
+    $('results').classList.remove('active');
+    $('analyzeBtn').disabled = true;
+    startLoading();
+
+    try {
+      const res = await fetch('http://localhost:8000/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript })
+      });
+      const data = await res.json();
+
+      stopLoading();
+      $('analyzeBtn').disabled = false;
+
+      if (data.error) {
+        $('errorBox').textContent = '⚠ ' + data.error + (data.hint ? ' — ' + data.hint : '');
+        $('errorBox').classList.add('active');
+        return;
+      }
+
+      // Score
+      const scoreEl = $('scoreNum');
+      scoreEl.textContent = data.score;
+      scoreEl.className = 'score-number ' + scoreColor(data.score);
+      if (data.correction_applied) {
+        $('correctedBadge').style.display = 'block';
+        $('scoreRaw').textContent = 'AI: ' + data.raw_score + ' → corrected';
+      } else {
+        $('correctedBadge').style.display = 'none';
+        $('scoreRaw').textContent = '';
+      }
+
+      // Layer
+      const layer = data.layer;
+      $('layerNum').textContent = 'LAYER ' + (layer?.layer ?? '—');
+      $('layerNum').className = 'layer-number layer-' + (layer?.layer ?? '1');
+      $('layerLabel').textContent = layer?.label ?? '—';
+      $('layerLabel').className = 'layer-label layer-' + (layer?.layer ?? '1');
+      $('layerDesc').textContent = layer?.description ?? '';
+
+      // Reasoning — bold key phrases
+      let reasoning = data.reasoning || '';
+      reasoning = reasoning
+        .replace(/(Score: \d+\.)/g, '<em>$1</em>')
+        .replace(/(Task Absorber|Task Executor|System Builder|Emerging System Builder)/g, '<em>$1</em>')
+        .replace(/(dependency|person-dependent|does not scale|would not continue)/gi, '<em>$1</em>');
+      $('reasoningText').innerHTML = reasoning;
+
+      renderEvidence(data.evidence);
+      renderKpis(data.kpis);
+      renderGaps(data.gaps);
+      renderQuestions(data.questions);
+
+      $('results').classList.add('active');
+      $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+      stopLoading();
+      $('analyzeBtn').disabled = false;
+      $('errorBox').textContent = '⚠ Could not connect to backend at localhost:8000. Make sure FastAPI is running: uvicorn main:app --reload';
+      $('errorBox').classList.add('active');
+    }
+  }
+</script>
+</body>
+</html>
