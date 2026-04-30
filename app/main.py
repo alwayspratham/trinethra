@@ -45,3 +45,34 @@ def analyze(input: TranscriptInput):
     output = call_ollama(prompt)
 
     return {"result": output}
+def build_prompt(transcript: str):
+    return f"""
+You are an expert evaluator of employee performance.
+
+Analyze the supervisor transcript and return STRICT JSON only.
+
+Transcript:
+{transcript}
+
+Return JSON in EXACT format:
+
+{{
+  "evidence": [
+    {{
+      "quote": "text",
+      "type": "positive/negative/neutral"
+    }}
+  ],
+  "score": number,
+  "reasoning": "text",
+  "kpis": ["TAT", "Quality", "NPS", "PAT"],
+  "gaps": ["text"],
+  "questions": ["text"]
+}}
+
+Rules:
+- Do NOT add explanation outside JSON
+- Do NOT add extra text
+- Score must be between 1 and 10
+- Evidence must be real quotes from transcript
+"""
